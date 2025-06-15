@@ -8,6 +8,7 @@
 				...state,
 				{
 					_id: action._id,
+					brand: action.brand,
 					name: action.name,
 					color: action.color,
 					form: action.form,
@@ -35,6 +36,7 @@
                 if (task._id === action._id) {
                     return {
                         ...task,
+						brand: action.brand,
                         name: action.name,
                         color: action.color,
 						form: action.form,
