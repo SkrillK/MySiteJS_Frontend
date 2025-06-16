@@ -1,12 +1,10 @@
 import React from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { todoAdd } from './actions';
-
+import { todoAdd, updateOptions } from './actions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGuitar, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-// Универсальный компонент для выбора и добавления опций
 class OptionAdder extends React.Component {
 	constructor(props) {
 		super(props);
@@ -32,6 +30,7 @@ class OptionAdder extends React.Component {
 			<div className="form-group">
 				<label>{this.props.label}</label>
 				<select
+					name={this.props.name}
 					value={this.props.selectedValue}
 					onChange={this.props.onChange}
 					className="form-control mb-2"
@@ -70,11 +69,7 @@ class ToDoTaskAddInner extends React.Component {
 			name: '',
 			color: '',
 			form: '',
-			strings: '',
-			brands: ['Fender', 'Gibson', 'Ibanez', 'Jackson', 'Schecter', 'Luxars', 'ESP'],
-			colors: ['Red', 'Black', 'White', 'Blue', 'Sunburst'],
-			forms: ['Explorer', 'Stratocaster', 'Superstrat', 'Les Paul', 'Headless'],
-			stringsOptions: ['6', '7', '8']
+			strings: ''
 		};
 
 		this.onBrandChange = this.onBrandChange.bind(this);
@@ -90,31 +85,71 @@ class ToDoTaskAddInner extends React.Component {
 	}
 
 	addBrand(newBrand) {
-		this.setState(prevState => ({
-			brands: [...prevState.brands, newBrand],
-			brand: newBrand
-		}));
+		const updatedBrands = [...this.props.brands, newBrand];
+		fetch('/options', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ brands: updatedBrands })
+		}).then(() => {
+			this.props.dispatch(updateOptions(
+				updatedBrands,
+				this.props.colors,
+				this.props.forms,
+				this.props.stringsOptions
+			));
+			this.setState({ brand: newBrand });
+		});
 	}
 
 	addColor(newColor) {
-		this.setState(prevState => ({
-			colors: [...prevState.colors, newColor],
-			color: newColor
-		}));
+		const updatedColors = [...this.props.colors, newColor];
+		fetch('/options', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ colors: updatedColors })
+		}).then(() => {
+			this.props.dispatch(updateOptions(
+				this.props.brands,
+				updatedColors,
+				this.props.forms,
+				this.props.stringsOptions
+			));
+			this.setState({ color: newColor });
+		});
 	}
 
 	addForm(newForm) {
-		this.setState(prevState => ({
-			forms: [...prevState.forms, newForm],
-			form: newForm
-		}));
+		const updatedForms = [...this.props.forms, newForm];
+		fetch('/options', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ forms: updatedForms })
+		}).then(() => {
+			this.props.dispatch(updateOptions(
+				this.props.brands,
+				this.props.colors,
+				updatedForms,
+				this.props.stringsOptions
+			));
+			this.setState({ form: newForm });
+		});
 	}
 
 	addStrings(newStrings) {
-		this.setState(prevState => ({
-			stringsOptions: [...prevState.stringsOptions, newStrings],
-			strings: newStrings
-		}));
+		const updatedStringsOptions = [...this.props.stringsOptions, newStrings];
+		fetch('/options', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ stringsOptions: updatedStringsOptions })
+		}).then(() => {
+			this.props.dispatch(updateOptions(
+				this.props.brands,
+				this.props.colors,
+				this.props.forms,
+				updatedStringsOptions
+			));
+			this.setState({ strings: newStrings });
+		});
 	}
 
 	onBrandChange(e) {
@@ -146,15 +181,21 @@ class ToDoTaskAddInner extends React.Component {
 				name: this.state.name,
 				color: this.state.color,
 				form: this.state.form,
-				strings: this.state.strings
+				strings: this.state.strings,
+				done: false
 			}),
 			headers: {
 				'Content-Type': 'application/json'
 			}
-		}).then((res) => {
-			return res.json();
-		}).then((data) => {
-			this.props.dispatch(todoAdd(data._id, data.brand, data.name, data.color, data.form, data.strings));
+		}).then(res => res.json()).then((data) => {
+			this.props.dispatch(todoAdd(
+				data._id,
+				data.brand,
+				data.name,
+				data.color,
+				data.form,
+				data.strings
+			));
 			this.props.history('/');
 		});
 	}
@@ -171,20 +212,20 @@ class ToDoTaskAddInner extends React.Component {
 				<div className="card-body">
 					<form onSubmit={this.onAddFormSubmit}>
 						<div className="form-container">
-							{/* Бренд */}
 							<OptionAdder
+								name="brand"
 								selectedValue={this.state.brand}
 								onChange={this.onBrandChange}
-								options={this.state.brands}
+								options={this.props.brands}
 								onAdd={this.addBrand}
 								label="Brand"
 							/>
 
-							{/* Модель */}
 							<div className="form-group">
 								<label>Model</label>
 								<input
 									type="text"
+									name="name"
 									value={this.state.name}
 									onChange={this.onNameChange}
 									placeholder="Enter model name"
@@ -193,29 +234,29 @@ class ToDoTaskAddInner extends React.Component {
 								/>
 							</div>
 
-							{/* Цвет */}
 							<OptionAdder
+								name="color"
 								selectedValue={this.state.color}
 								onChange={this.onColorChange}
-								options={this.state.colors}
+								options={this.props.colors}
 								onAdd={this.addColor}
 								label="Color"
 							/>
 
-							{/* Форма */}
 							<OptionAdder
+								name="form"
 								selectedValue={this.state.form}
 								onChange={this.onFormChange}
-								options={this.state.forms}
+								options={this.props.forms}
 								onAdd={this.addForm}
 								label="Form"
 							/>
 
-							{/* Струны */}
 							<OptionAdder
+								name="strings"
 								selectedValue={this.state.strings}
 								onChange={this.onStringsChange}
-								options={this.state.stringsOptions}
+								options={this.props.stringsOptions}
 								onAdd={this.addStrings}
 								label="Strings"
 							/>
@@ -232,10 +273,19 @@ class ToDoTaskAddInner extends React.Component {
 	}
 }
 
+function mapStateToProps(state) {
+	return {
+		brands: state.options.brands,
+		colors: state.options.colors,
+		forms: state.options.forms,
+		stringsOptions: state.options.stringsOptions
+	};
+}
+
 const ToDoTaskAdd = (props) => {
 	return (
 		<ToDoTaskAddInner {...props} history={useNavigate()} />
 	);
 };
 
-export default connect()(ToDoTaskAdd);
+export default connect(mapStateToProps)(ToDoTaskAdd);

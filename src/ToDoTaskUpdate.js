@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, NavLink } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { todoUpdateState } from './actions';
-
+import { todoUpdateState, updateOptions } from './actions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGuitar, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-// Универсальный компонент для выбора и добавления опций (такой же как в первом файле)
 class OptionAdder extends React.Component {
     constructor(props) {
         super(props);
@@ -63,22 +61,17 @@ class OptionAdder extends React.Component {
     }
 }
 
-const UpdateGuitar = ({ dispatch }) => {
+const UpdateGuitar = ({ dispatch, brands, colors, forms, stringsOptions }) => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [task, setTask] = useState({
+        _id: '',
         brand: '',
         name: '',
         color: '',
         form: '',
-        strings: ''
-    });
-    
-    const [options, setOptions] = useState({
-        brands: ['Fender', 'Gibson', 'Ibanez', 'Jackson', 'Schecter', 'Luxars', 'ESP'],
-        colors: ['Red', 'Black', 'White', 'Blue', 'Sunburst'],
-        forms: ['Explorer', 'Stratocaster', 'Superstrat', 'Les Paul', 'Headless'],
-        stringsOptions: ['6', '7', '8']
+        strings: '',
+        done: false
     });
 
     useEffect(() => {
@@ -98,59 +91,81 @@ const UpdateGuitar = ({ dispatch }) => {
     };
 
     const addBrand = (newBrand) => {
-        setOptions(prev => ({
-            ...prev,
-            brands: [...prev.brands, newBrand]
-        }));
-        setTask(prev => ({ ...prev, brand: newBrand }));
+        const updatedBrands = [...brands, newBrand];
+        fetch('/options', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brands: updatedBrands })
+        }).then(() => {
+            dispatch(updateOptions(
+                updatedBrands,
+                colors,
+                forms,
+                stringsOptions
+            ));
+            setTask(prev => ({ ...prev, brand: newBrand }));
+        });
     };
 
     const addColor = (newColor) => {
-        setOptions(prev => ({
-            ...prev,
-            colors: [...prev.colors, newColor]
-        }));
-        setTask(prev => ({ ...prev, color: newColor }));
+        const updatedColors = [...colors, newColor];
+        fetch('/options', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ colors: updatedColors })
+        }).then(() => {
+            dispatch(updateOptions(
+                brands,
+                updatedColors,
+                forms,
+                stringsOptions
+            ));
+            setTask(prev => ({ ...prev, color: newColor }));
+        });
     };
 
     const addForm = (newForm) => {
-        setOptions(prev => ({
-            ...prev,
-            forms: [...prev.forms, newForm]
-        }));
-        setTask(prev => ({ ...prev, form: newForm }));
+        const updatedForms = [...forms, newForm];
+        fetch('/options', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ forms: updatedForms })
+        }).then(() => {
+            dispatch(updateOptions(
+                brands,
+                colors,
+                updatedForms,
+                stringsOptions
+            ));
+            setTask(prev => ({ ...prev, form: newForm }));
+        });
     };
 
     const addStrings = (newStrings) => {
-        setOptions(prev => ({
-            ...prev,
-            stringsOptions: [...prev.stringsOptions, newStrings]
-        }));
-        setTask(prev => ({ ...prev, strings: newStrings }));
+        const updatedStringsOptions = [...stringsOptions, newStrings];
+        fetch('/options', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stringsOptions: updatedStringsOptions })
+        }).then(() => {
+            dispatch(updateOptions(
+                brands,
+                colors,
+                forms,
+                updatedStringsOptions
+            ));
+            setTask(prev => ({ ...prev, strings: newStrings }));
+        });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        const updatedData = {
-            _id: task._id,
-            brand: task.brand,
-            name: task.name,
-            color: task.color,
-            form: task.form,
-            strings: task.strings
-        };
-
         fetch(`/update/${id}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedData),
-        })
-        .then(res => res.json())
-        .then(data => {
-            dispatch(todoUpdateState(data._id, data.brand, data.name, data.color, data.form, data.strings));
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
+        }).then(() => {
+            dispatch(todoUpdateState(task._id));
             navigate('/');
         });
     };
@@ -166,17 +181,15 @@ const UpdateGuitar = ({ dispatch }) => {
             <div className="card-body">
                 <form onSubmit={handleSubmit}>
                     <div className="form-container">
-                        {/* Бренд */}
                         <OptionAdder
                             name="brand"
                             selectedValue={task.brand}
                             onChange={handleChange}
-                            options={options.brands}
+                            options={brands}
                             onAdd={addBrand}
                             label="Brand"
                         />
 
-                        {/* Модель */}
                         <div className="form-group">
                             <label>Model</label>
                             <input
@@ -190,32 +203,29 @@ const UpdateGuitar = ({ dispatch }) => {
                             />
                         </div>
 
-                        {/* Цвет */}
                         <OptionAdder
                             name="color"
                             selectedValue={task.color}
                             onChange={handleChange}
-                            options={options.colors}
+                            options={colors}
                             onAdd={addColor}
                             label="Color"
                         />
 
-                        {/* Форма */}
                         <OptionAdder
                             name="form"
                             selectedValue={task.form}
                             onChange={handleChange}
-                            options={options.forms}
+                            options={forms}
                             onAdd={addForm}
                             label="Form"
                         />
 
-                        {/* Струны */}
                         <OptionAdder
                             name="strings"
                             selectedValue={task.strings}
                             onChange={handleChange}
-                            options={options.stringsOptions}
+                            options={stringsOptions}
                             onAdd={addStrings}
                             label="Strings"
                         />
@@ -231,4 +241,13 @@ const UpdateGuitar = ({ dispatch }) => {
     );
 };
 
-export default connect()(UpdateGuitar);
+function mapStateToProps(state) {
+    return {
+        brands: state.options.brands,
+        colors: state.options.colors,
+        forms: state.options.forms,
+        stringsOptions: state.options.stringsOptions
+    };
+}
+
+export default connect(mapStateToProps)(UpdateGuitar);

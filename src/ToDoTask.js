@@ -11,8 +11,8 @@ class ToDoTask extends React.Component {
 	}
 	onStatusClick(e) {
 		e.preventDefault();
-				
-		fetch(`tasks/${this.props.task._id}`,{
+
+		fetch(`tasks/${this.props.task._id}`, {
 			method: 'PATCH',
 			body: JSON.stringify({
 				done: !this.props.task.done
@@ -30,12 +30,12 @@ class ToDoTask extends React.Component {
 			}
 		});
 	}
-	onDeleteClick(e){
+	onDeleteClick(e) {
 		e.preventDefault();
-		
-		fetch(`tasks/${this.props.task._id}`,{
+
+		fetch(`tasks/${this.props.task._id}`, {
 			method: 'DELETE'
-			}).then((res) => {
+		}).then((res) => {
 			if (res.status === 200) {
 				console.log('Deleted');
 				this.props.dispatch(todoDelete(this.props.task._id));
@@ -48,7 +48,7 @@ class ToDoTask extends React.Component {
 	render() {
 		return (
 			<li className="list-group-item">
-				{this.props.task.done ? <div className="todo-indicator bg-success"></div>:<div className="todo-indicator bg-focus"></div>}
+				{this.props.task.done ? <div className="todo-indicator bg-success"></div> : <div className="todo-indicator bg-focus"></div>}
 				<div className="widget-content p-0">
 					<div className="widget-content-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
 						<div className="widget-content-left" style={{ flex: 1 }}>
@@ -70,7 +70,7 @@ class ToDoTask extends React.Component {
 								<i className="fa fa-trash"></i>
 							</button>
 							<NavLink to={`/update/${this.props.task._id}`} className="btn btn-primary"> <i className="fa fa-pencil"></i></NavLink>
-							
+
 						</div>
 					</div>
 				</div>
